@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+
+{% block body %}
+{% for review in reviews %}
+User - {{review.user}}<br>
+- {{review.comment}} {{review.rating}}<br>
+{% endfor %}
+{% endblock body %}
