@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
 # Create your models here.
@@ -17,7 +18,7 @@ class Game(models.Model):
     title = models.CharField(max_length=100, unique=True)
     slug = models.SlugField(unique=True)
     description = models.TextField(blank=True)
-    cover = models.ImageField(blank=True)
+    cover = models.ImageField(blank=True, upload_to='covers', default='covers/default.jpg')
     price = models.DecimalField(max_digits=5, decimal_places=2)
     stock = models.IntegerField()
     released_at = models.DateField()
@@ -36,7 +37,11 @@ class Game(models.Model):
 
 class Review(models.Model):
     comment = models.TextField()
-    rating = models.PositiveSmallIntegerField()
+    rating = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(5)]
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
     game = models.ForeignKey('Game', on_delete=models.CASCADE, related_name='reviews')
     author = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='reviews'
