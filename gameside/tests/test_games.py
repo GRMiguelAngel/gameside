@@ -38,16 +38,20 @@ def test_game_list_fails_when_method_is_not_allowed(client):
 
 @pytest.mark.django_db
 def test_game_list_with_querystring_filter(client, category, platform):
+    blacklist_games = baker.make(Game, _fill_optional=True, _quantity=10)
     baker.make(Game, category=category, _fill_optional=True, _quantity=10)
+    games = Game.objects.filter(category=category, platforms=platform)
     for game in (games := Game.objects.all()):
         game.platforms.add(platform)
-        game.platforms.add(baker.make(Platform, _fill_optional=True))
     status, response = get_json(
         client, f'/api/games/?category={category.slug}&platform={platform.slug}'
     )
     assert status == 200
     for game in response:
         compare_games(game, games.get(pk=game['id']))
+    blacklist_games_pks = [game.pk for game in blacklist_games]
+    for game in response:
+        assert game['id'] not in blacklist_games_pks
 
 
 @pytest.mark.django_db
@@ -88,10 +92,11 @@ def test_game_detail_fails_when_game_does_not_exist(client):
 @pytest.mark.django_db
 def test_review_list(client, game):
     baker.make(Review, game=game, _fill_optional=True, _quantity=10)
+    reviews = Review.objects.filter(game=game)
     status, response = get_json(client, f'/api/games/{game.slug}/reviews/')
     assert status == 200
     for review in response:
-        compare_reviews(review, game.reviews.get(pk=review['id']))
+        compare_reviews(review, reviews.get(pk=review['id']))
 
 
 @pytest.mark.django_db
@@ -160,7 +165,7 @@ def test_add_review_fails_when_token_is_invalid(client):
     data = {'token': str(uuid.uuid4()), 'rating': 1, 'comment': 'This is a test comment'}
     status, response = post_json(client, '/api/games/test/reviews/add/', data)
     assert status == 401
-    assert response == {'error': 'Invalid token'}
+    assert response == {'error': 'Unknown authentication token'}
 
 
 @pytest.mark.django_db

@@ -7,6 +7,7 @@ from .models import Game, Review
 @admin.register(Game)
 class GameAdmin(admin.ModelAdmin):
     list_display = ['title', 'price', 'stock']
+    prepopulated_fields = {'slug': ['title']}
 
 
 @admin.register(Review)
