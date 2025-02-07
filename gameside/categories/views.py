@@ -9,13 +9,13 @@ from .serializers import CategorySerializer
 # Create your views here.
 
 
-@correct_method
+@correct_method('GET')
 def category_list(request: HttpRequest) -> HttpResponse:
     category = Category.objects.all()
     serializer = CategorySerializer(category, request=request)
     return serializer.json_response()
 
-@correct_method
+@correct_method('GET')
 @category_exists
 def category_detail(request: HttpRequest, category_slug: int) -> HttpResponse:
     category = Category.objects.get(slug=category_slug)

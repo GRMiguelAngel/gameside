@@ -20,5 +20,12 @@ class Order(models.Model):
     )
     games = models.ManyToManyField('games.Game', related_name='orders', blank=True)
 
+    @property
+    def price(self):
+        price = 0
+        for game in self.games:
+            price += game.price
+        return price
+
     def __str__(self):
         return f'{self.user} - {self.games}'

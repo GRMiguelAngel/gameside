@@ -5,6 +5,6 @@ from django.contrib.auth.models import User
 from shared.decorators import correct_method
 # Create your views here.
 
-@correct_method
+@correct_method('POST')
 def add_order(request: HttpRequest) -> HttpResponse:
     pass

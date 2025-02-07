@@ -5,15 +5,15 @@ from .serializers import JsonResponse
 
 # from django.contrib.auth import get_user_model
 
+def correct_method(method):
+    def decorator(func):
+        def wrapper(request, *args, **kwargs):
+            if request.method != method:
+                return JsonResponse({'error': 'Method not allowed'}, status=405)
+            return func(request, *args, **kwargs)
 
-def correct_method(func):
-    def wrapper(request, *args, **kwargs):
-        if request.method != 'GET':
-            return JsonResponse({'error': 'Method not allowed'}, status=405)
-        return func(request, *args, **kwargs)
-
-    return wrapper
-
+        return wrapper
+    return decorator
 
 def category_exists(func):
     def wrapper(request, *args, **kwargs):
@@ -37,26 +37,13 @@ def game_exists(func):
     return wrapper
 
 
-def _(*fields):
+def required_fields(*fields):
     def decorator(func):
         def wrapper(*args, **kwargs):
-            request = json.loads(args[0])
-            print(request)
+            request_body = json.loads(args[0].body)
+            for field in fields:
+                if field not in request_body:
+                    return JsonResponse({'error': 'Missing required fields'}, status=400)
             return func(*args, **kwargs)
         return wrapper
-
-# def auth_required(func):
-#     def wrapper(request, *args, **kwargs):
-#         User = get_user_model()
-#         try:
-#             payload = json.loads(request.body)
-#             user = User.objects.get(token__key=payload.get('token'))
-#             request.user = user
-#         except User.DoesNotExist:
-#             return JsonResponse(
-#                 {'error': 'Unknown authentication token'},
-#                 status=401,
-#             )
-#         return func(request, *args, **kwargs)
-
-#     return wrapper
+    return decorator
