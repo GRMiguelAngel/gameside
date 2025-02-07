@@ -2,6 +2,7 @@ from django.http import HttpRequest, HttpResponse
 
 from shared.decorators import correct_method, game_exists
 
+from users.views import auth
 from .models import Game, Review
 from .serializers import GameSerializer, ReviewSerializer
 
@@ -36,7 +37,6 @@ def game_reviews(request: HttpRequest, game_slug: str) -> HttpResponse:
 
 def add_review(request: HttpRequest, game_slug: str) -> HttpResponse:
     token = request.headers.get('Authoritation')
-    print(request.headers)
     pass
 
 

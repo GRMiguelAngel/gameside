@@ -1,6 +1,6 @@
 from categories.models import Category
 from games.models import Game
-
+import json
 from .serializers import JsonResponse
 
 # from django.contrib.auth import get_user_model
@@ -37,7 +37,13 @@ def game_exists(func):
     return wrapper
 
 
-
+def _(*fields):
+    def decorator(func):
+        def wrapper(*args, **kwargs):
+            request = json.loads(args[0])
+            print(request)
+            return func(*args, **kwargs)
+        return wrapper
 
 # def auth_required(func):
 #     def wrapper(request, *args, **kwargs):
