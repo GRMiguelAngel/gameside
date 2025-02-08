@@ -9,7 +9,6 @@ class UserSerializer(BaseSerializer):
         return {
             'id': instance.pk,
             'username': instance.username,
-            'password': instance.password,
             'first_name': instance.first_name,
             'last_name': instance.last_name,
             'email': instance.email,
