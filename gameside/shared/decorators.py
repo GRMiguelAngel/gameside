@@ -1,5 +1,7 @@
 import json
+import re
 
+from users.models import Token
 from categories.models import Category
 from games.models import Game, Review
 
@@ -45,7 +47,7 @@ def game_exists(func):
 def review_exists(func):
     def wrapper(*args, **kwargs):
         try:
-            Review.objects.get(slug=kwargs['review_slug'])
+            Review.objects.get(pk=kwargs['review_pk'])
         except:
             return JsonResponse({'error': 'Review not found'}, status=404)
         return func(*args, **kwargs)
@@ -68,3 +70,4 @@ def required_fields(*fields):
         return wrapper
 
     return decorator
+

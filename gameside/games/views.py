@@ -6,6 +6,7 @@ from django.http import HttpRequest, HttpResponse, JsonResponse
 from shared.decorators import correct_method, game_exists, required_fields, review_exists
 
 from .models import Game, Review
+from users.models import Token
 from .serializers import GameSerializer, ReviewSerializer
 
 # Create your views here.
@@ -41,16 +42,21 @@ def game_reviews(request: HttpRequest, game_slug: str) -> HttpResponse:
 @required_fields('rating', 'comment')
 @game_exists
 def add_review(request: HttpRequest, game_slug: str) -> HttpResponse:
-    payload = request.headers.get('Authorization')
     json_body = json.loads(request.body)
+    payload = request.headers.get('Authorization')
     rating, comment = json_body['rating'], json_body['comment']
-    valid_token = r'^Bearer (?P<token>[0-9a-f]1{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12})$'
-    if not (regexp := re.fullmatch(valid_token, payload)):
+    regexp = r'Bearer\s(?P<token>[\d|a-f]{8}-[\d|a-f]{4}-[\d|a-f]{4}-[\d|a-f]{4}-[\d|a-f]{12})'
+    if not (captured_token := re.fullmatch(regexp, payload)):
         return JsonResponse({'error': 'Invalid authentication token'}, status=400)
+    try:
+        token = Token.objects.get(key=captured_token['token'])
+    except:
+        return JsonResponse({'error': 'Unregistered authentication token'}, status=401)
+    game = Game.objects.get(slug=game_slug)
+    review = Review.objects.create(rating=rating, comment=comment, author=token.user, game=game)
+    serializer = ReviewSerializer(review)
+    return serializer.json_response()
 
-    # Review.objects.create()
-
-    pass
 
 
 @correct_method('GET')
