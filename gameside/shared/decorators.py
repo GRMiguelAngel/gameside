@@ -1,11 +1,12 @@
 import json
 import re
 
-from users.models import Token
+from django.http import JsonResponse
+
 from categories.models import Category
 from games.models import Game, Review
-
-from django.http import JsonResponse
+from platforms.models import Platform
+from users.models import Token
 
 # from django.contrib.auth import get_user_model
 
@@ -26,7 +27,7 @@ def category_exists(func):
     def wrapper(*args, **kwargs):
         try:
             Category.objects.get(slug=kwargs['category_slug'])
-        except:
+        except Category.DoesNotExist:
             return JsonResponse({'error': 'Category not found'}, status=404)
         return func(*args, **kwargs)
 
@@ -37,8 +38,19 @@ def game_exists(func):
     def wrapper(*args, **kwargs):
         try:
             Game.objects.get(slug=kwargs['game_slug'])
-        except:
+        except Game.DoesNotExist:
             return JsonResponse({'error': 'Game not found'}, status=404)
+        return func(*args, **kwargs)
+
+    return wrapper
+
+
+def platform_exists(func):
+    def wrapper(*args, **kwargs):
+        try:
+            Platform.objects.get(slug=kwargs['platform_slug'])
+        except Platform.DoesNotExist:
+            return JsonResponse({'error': 'Platform not found'}, status=404)
         return func(*args, **kwargs)
 
     return wrapper
@@ -48,7 +60,7 @@ def review_exists(func):
     def wrapper(*args, **kwargs):
         try:
             Review.objects.get(pk=kwargs['review_pk'])
-        except:
+        except Review.DoesNotExist:
             return JsonResponse({'error': 'Review not found'}, status=404)
         return func(*args, **kwargs)
 
@@ -60,8 +72,8 @@ def required_fields(*fields):
         def wrapper(*args, **kwargs):
             try:
                 request_body = json.loads(args[0].body)
-            except:
-                return JsonResponse({'error': 'Invalid JSON body'}, status=400)                
+            except json.JSONDecodeError:
+                return JsonResponse({'error': 'Invalid JSON body'}, status=400)
             for field in fields:
                 if field not in request_body:
                     return JsonResponse({'error': 'Missing required fields'}, status=400)
@@ -71,3 +83,18 @@ def required_fields(*fields):
 
     return decorator
 
+
+def token_check(func):
+    def wrapper(*args, **kwargs):
+        regexp = r'Bearer\s(?P<token>[\d|a-f]{8}-[\d|a-f]{4}-[\d|a-f]{4}-[\d|a-f]{4}-[\d|a-f]{12})'
+        payload = args[0].headers.get('Authorization')
+        if not (captured_token := re.fullmatch(regexp, payload)):
+            return JsonResponse({'error': 'Invalid authentication token'}, status=400)
+        try:
+            Token.objects.get(key=captured_token['token'])
+        except Token.DoesNotExist:
+            return JsonResponse({'error': 'Unregistered authentication token'}, status=401)
+
+        return func(*args, **kwargs)
+
+    return wrapper

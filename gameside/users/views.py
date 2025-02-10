@@ -12,9 +12,9 @@ from shared.decorators import correct_method, required_fields
 # if not :
 
 
+@correct_method('POST')
 @required_fields('username', 'password')
 @csrf_exempt
-@correct_method('POST')
 def auth(request):
     data = json.loads(request.body)
     username, password = data['username'], data['password']
