@@ -17,9 +17,10 @@ from .serializers import GameSerializer, ReviewSerializer
 
 # Create your views here.
 
-
 @correct_method('GET')
 def game_list(request: HttpRequest) -> HttpResponse:
+    category_filter = request.GET.get('category')
+    platform_filter = request.GET.get('platform')
     games = Game.objects.all()
     serializer = GameSerializer(games, request=request)
     return serializer.json_response()
