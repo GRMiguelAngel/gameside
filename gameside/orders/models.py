@@ -23,7 +23,7 @@ class Order(models.Model):
     @property
     def price(self):
         price = 0
-        for game in self.games:
+        for game in self.games.all():
             price += game.price
         return price
 

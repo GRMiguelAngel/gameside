@@ -5,6 +5,7 @@ from django.http import JsonResponse
 
 from categories.models import Category
 from games.models import Game, Review
+from orders.models import Order
 from platforms.models import Platform
 from users.models import Token
 
@@ -67,6 +68,17 @@ def review_exists(func):
     return wrapper
 
 
+def order_exists(func):
+    def wrapper(*args, **kwargs):
+        try:
+            Order.objects.get(pk=kwargs['order_pk'])
+        except Order.DoesNotExist:
+            return JsonResponse({'error': 'Order not found'}, status=404)
+        return func(*args, **kwargs)
+
+    return wrapper
+
+
 def required_fields(*fields):
     def decorator(func):
         def wrapper(*args, **kwargs):
@@ -95,6 +107,20 @@ def token_check(func):
         except Token.DoesNotExist:
             return JsonResponse({'error': 'Unregistered authentication token'}, status=401)
 
+        return func(*args, **kwargs)
+
+    return wrapper
+
+
+def user_is_owner(func):
+    def wrapper(*args, **kwargs):
+        regexp = r'Bearer\s(?P<token>[\d|a-f]{8}-[\d|a-f]{4}-[\d|a-f]{4}-[\d|a-f]{4}-[\d|a-f]{12})'
+        payload = args[0].headers.get('Authorization')
+        captured_token = re.fullmatch(regexp, payload)['token']
+        token = Token.objects.get(key=captured_token)
+        order = Order.objects.get(pk=kwargs['order_pk'])
+        if not order.user == token.user:
+            return JsonResponse({'error': 'User is not the owner of requested order'}, status=403)
         return func(*args, **kwargs)
 
     return wrapper
