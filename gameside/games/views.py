@@ -22,6 +22,7 @@ from .serializers import GameSerializer, ReviewSerializer
 def game_list(request: HttpRequest) -> HttpResponse:
     category_filter = request.GET.get('category')
     platform_filter = request.GET.get('platform')
+
     games = Game.objects.all()
 
     if category_filter:
@@ -57,6 +58,7 @@ def game_reviews(request: HttpRequest, game_slug: str) -> HttpResponse:
 @correct_method('POST')
 @required_fields('rating', 'comment')
 @token_check
+
 @game_exists
 def add_review(request: HttpRequest, game_slug: str) -> HttpResponse:
     json_body = json.loads(request.body)

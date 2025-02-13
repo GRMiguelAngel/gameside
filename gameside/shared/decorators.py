@@ -1,6 +1,6 @@
 import json
 import re
-
+from datetime import datetime
 from django.http import JsonResponse
 
 from categories.models import Category
@@ -185,6 +185,10 @@ def valid_card(func):
         captured_exp_date = re.fullmatch(exp_date_regexp, exp_date)
         if not captured_exp_date:
             return JsonResponse({'error': 'Invalid expiration date'}, status=400)
+        
+        date_format = datetime.strptime(exp_date, '%m/%Y')
+        if date_format < datetime.now():
+            return JsonResponse({'error': 'Card expired'}, status=400)
 
         cvc_regexp = r'\d{3}'
         captured_cvc = re.fullmatch(cvc_regexp, cvc)
