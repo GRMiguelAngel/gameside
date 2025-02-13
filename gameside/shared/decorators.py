@@ -38,7 +38,11 @@ def category_exists(func):
 def game_exists(func):
     def wrapper(*args, **kwargs):
         try:
-            Game.objects.get(slug=kwargs['game_slug'])
+            game_slug = json.loads(args[0].body)['game-slug']
+        except:
+            game_slug = kwargs['game_slug']
+        try:
+            Game.objects.get(slug=game_slug)
         except Game.DoesNotExist:
             return JsonResponse({'error': 'Game not found'}, status=404)
         return func(*args, **kwargs)
@@ -112,6 +116,48 @@ def token_check(func):
     return wrapper
 
 
+def invalid_status(func):
+    def wrapper(*args, **kwargs):
+        status = json.loads(args[0].body)['status']
+        if status not in [Order.Status.CONFIRMED, Order.Status.CANCELLED]:
+            return JsonResponse({'error': 'Invalid status'}, status=400)
+
+        return func(*args, **kwargs)
+
+    return wrapper
+
+
+def is_initiated(func):
+    def wrapper(*args, **kwargs):
+        order_pk = kwargs['order_pk']
+        order = Order.objects.get(pk=order_pk)
+
+        if order.status != Order.Status.INITIATED:
+            return JsonResponse(
+                {'error': 'Orders can only be confirmed/cancelled when initiated'}, status=400
+            )
+
+        return func(*args, **kwargs)
+
+    return wrapper
+
+
+def is_confirmed(func):
+    def wrapper(*args, **kwargs):
+        order_pk = kwargs['order_pk']
+        order = Order.objects.get(pk=order_pk)
+
+        if order.status != Order.Status.CONFIRMED:
+            return JsonResponse(
+                {'error': 'Orders can only be paid when confirmed'}, status=400
+            )
+
+        return func(*args, **kwargs)
+
+    return wrapper
+
+
+
 def user_is_owner(func):
     def wrapper(*args, **kwargs):
         regexp = r'Bearer\s(?P<token>[\d|a-f]{8}-[\d|a-f]{4}-[\d|a-f]{4}-[\d|a-f]{4}-[\d|a-f]{12})'
@@ -121,6 +167,32 @@ def user_is_owner(func):
         order = Order.objects.get(pk=kwargs['order_pk'])
         if not order.user == token.user:
             return JsonResponse({'error': 'User is not the owner of requested order'}, status=403)
+        return func(*args, **kwargs)
+
+    return wrapper
+
+
+def valid_card(func):
+    def wrapper(*args, **kwargs):
+        data = json.loads(args[0].body)
+        card_number, exp_date, cvc = data['card-number'], data['exp-date'], data['cvc']
+        card_regexp = r'\d{4}-\d{4}-\d{4}-\d{4}'
+        captured_card_number = re.fullmatch(card_regexp, card_number)
+        if not captured_card_number:
+            return JsonResponse({'error': 'Invalid card number'}, status=400)
+        
+        exp_date_regexp = r'\d{2}/\d{4}'
+        captured_exp_date = re.fullmatch(exp_date_regexp, exp_date)
+        if not captured_exp_date:
+            return JsonResponse({'error': 'Invalid expiration date'}, status=400)
+
+        cvc_regexp = r'\d{3}'
+        captured_cvc = re.fullmatch(cvc_regexp, cvc)
+        if not captured_cvc:
+            return JsonResponse({'error': 'Invalid CVC'}, status=400)
+
+
+
         return func(*args, **kwargs)
 
     return wrapper
