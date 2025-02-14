@@ -1,6 +1,6 @@
 from django.http import HttpRequest, HttpResponse
 
-from shared.decorators import correct_method, platform_exists
+from shared.decorators import correct_method, object_exists
 
 from .models import Platform
 from .serializers import PlatformSerializer
@@ -15,7 +15,7 @@ def platform_list(request: HttpRequest) -> HttpResponse:
 
 
 @correct_method('GET')
-@platform_exists
+@object_exists('Platform')
 def platform_detail(request: HttpRequest, platform_slug: str) -> HttpResponse:
     platform = Platform.objects.get(slug=platform_slug)
     serializer = PlatformSerializer(platform, request=request)

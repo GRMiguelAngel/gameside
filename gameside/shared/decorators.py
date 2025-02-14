@@ -1,6 +1,7 @@
 import json
 import re
 from datetime import datetime
+
 from django.http import JsonResponse
 
 from categories.models import Category
@@ -24,6 +25,45 @@ def correct_method(method):
     return decorator
 
 
+def object_exists(req_model):
+    all_models = {
+        'Game': Game,
+        'Category': Category,
+        'Review': Review,
+        'Platform': Platform,
+        'Order': Order,
+    }
+
+    def decorator(func):
+        def wrapper(*args, **kwargs):
+            model = all_models[req_model]
+            parameter = list(kwargs.keys())[0]
+            value = kwargs.get(parameter)
+            if value:
+                is_pk = parameter.split('_')[-1] == 'pk'
+                try:
+                    if is_pk:
+                        model.objects.get(pk=value)
+                    else:
+                        model.objects.get(slug=value)
+                except model.DoesNotExist:
+                    return JsonResponse({'error': f'{req_model} not found'}, status=404)
+            else:
+                data = json.loads(args[0].body)
+                value = data.get('game-slug')
+                try:
+                    model.objects.get(slug=value)
+                except model.DoesNotExist:
+                    return JsonResponse({'error': f'{req_model} not found'}, status=404)
+                
+
+            return func(*args, **kwargs)
+
+        return wrapper
+
+    return decorator
+
+
 def category_exists(func):
     def wrapper(*args, **kwargs):
         try:
@@ -37,10 +77,9 @@ def category_exists(func):
 
 def game_exists(func):
     def wrapper(*args, **kwargs):
-        try:
-            game_slug = json.loads(args[0].body)['game-slug']
-        except:
-            game_slug = kwargs['game_slug']
+        game_slug = kwargs.get('game_slug')
+        if not game_slug:
+            game_slug = json.loads(args[0].body).get('game-slug')
         try:
             Game.objects.get(slug=game_slug)
         except Game.DoesNotExist:
@@ -64,6 +103,7 @@ def platform_exists(func):
 def review_exists(func):
     def wrapper(*args, **kwargs):
         try:
+            print(kwargs)
             Review.objects.get(pk=kwargs['review_pk'])
         except Review.DoesNotExist:
             return JsonResponse({'error': 'Review not found'}, status=404)
@@ -148,14 +188,11 @@ def is_confirmed(func):
         order = Order.objects.get(pk=order_pk)
 
         if order.status != Order.Status.CONFIRMED:
-            return JsonResponse(
-                {'error': 'Orders can only be paid when confirmed'}, status=400
-            )
+            return JsonResponse({'error': 'Orders can only be paid when confirmed'}, status=400)
 
         return func(*args, **kwargs)
 
     return wrapper
-
 
 
 def user_is_owner(func):
@@ -180,12 +217,12 @@ def valid_card(func):
         captured_card_number = re.fullmatch(card_regexp, card_number)
         if not captured_card_number:
             return JsonResponse({'error': 'Invalid card number'}, status=400)
-        
+
         exp_date_regexp = r'\d{2}/\d{4}'
         captured_exp_date = re.fullmatch(exp_date_regexp, exp_date)
         if not captured_exp_date:
             return JsonResponse({'error': 'Invalid expiration date'}, status=400)
-        
+
         date_format = datetime.strptime(exp_date, '%m/%Y')
         if date_format < datetime.now():
             return JsonResponse({'error': 'Card expired'}, status=400)
@@ -194,8 +231,6 @@ def valid_card(func):
         captured_cvc = re.fullmatch(cvc_regexp, cvc)
         if not captured_cvc:
             return JsonResponse({'error': 'Invalid CVC'}, status=400)
-
-
 
         return func(*args, **kwargs)
 
