@@ -8,16 +8,14 @@ from games.serializers import GameSerializer
 from orders.models import Order
 from shared.decorators import (
     correct_method,
-    game_exists,
-    order_exists,
+    invalid_status,
+    is_confirmed,
+    is_initiated,
+    object_exists,
     required_fields,
     token_check,
     user_is_owner,
-    invalid_status,
-    is_initiated,
     valid_card,
-    is_confirmed,
-    object_exists
 )
 from users.models import Token
 
@@ -34,6 +32,7 @@ def add_order(request: HttpRequest) -> HttpResponse:
     captured_token = re.fullmatch(regexp, payload)['token']
     token = Token.objects.get(key=captured_token)
     review = Order.objects.create(user=token.user)
+
     return JsonResponse({'id': review.pk}, status=200)
 
 
@@ -85,8 +84,9 @@ def change_order_status(request: HttpRequest, order_pk: int) -> HttpResponse:
     order.save()
     return JsonResponse({'status': order.get_status_display()}, status=200)
 
+
 @correct_method('POST')
-@required_fields('card-number','exp-date', 'cvc')
+@required_fields('card-number', 'exp-date', 'cvc')
 @token_check
 @object_exists('Order')
 @user_is_owner

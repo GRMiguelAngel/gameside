@@ -64,64 +64,6 @@ def object_exists(req_model):
     return decorator
 
 
-def category_exists(func):
-    def wrapper(*args, **kwargs):
-        try:
-            Category.objects.get(slug=kwargs['category_slug'])
-        except Category.DoesNotExist:
-            return JsonResponse({'error': 'Category not found'}, status=404)
-        return func(*args, **kwargs)
-
-    return wrapper
-
-
-def game_exists(func):
-    def wrapper(*args, **kwargs):
-        game_slug = kwargs.get('game_slug')
-        if not game_slug:
-            game_slug = json.loads(args[0].body).get('game-slug')
-        try:
-            Game.objects.get(slug=game_slug)
-        except Game.DoesNotExist:
-            return JsonResponse({'error': 'Game not found'}, status=404)
-        return func(*args, **kwargs)
-
-    return wrapper
-
-
-def platform_exists(func):
-    def wrapper(*args, **kwargs):
-        try:
-            Platform.objects.get(slug=kwargs['platform_slug'])
-        except Platform.DoesNotExist:
-            return JsonResponse({'error': 'Platform not found'}, status=404)
-        return func(*args, **kwargs)
-
-    return wrapper
-
-
-def review_exists(func):
-    def wrapper(*args, **kwargs):
-        try:
-            print(kwargs)
-            Review.objects.get(pk=kwargs['review_pk'])
-        except Review.DoesNotExist:
-            return JsonResponse({'error': 'Review not found'}, status=404)
-        return func(*args, **kwargs)
-
-    return wrapper
-
-
-def order_exists(func):
-    def wrapper(*args, **kwargs):
-        try:
-            Order.objects.get(pk=kwargs['order_pk'])
-        except Order.DoesNotExist:
-            return JsonResponse({'error': 'Order not found'}, status=404)
-        return func(*args, **kwargs)
-
-    return wrapper
-
 
 def required_fields(*fields):
     def decorator(func):
