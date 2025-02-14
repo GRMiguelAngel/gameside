@@ -35,7 +35,7 @@ def game_list(request: HttpRequest) -> HttpResponse:
 
 
 @correct_method('GET')
-@object_exists('Game')
+@object_exists(Game)
 def game_detail(request: HttpRequest, game_slug: str) -> HttpResponse:
     game = Game.objects.get(slug=game_slug)
     serializer = GameSerializer(game, request=request)
@@ -43,7 +43,7 @@ def game_detail(request: HttpRequest, game_slug: str) -> HttpResponse:
 
 
 @correct_method('GET')
-@object_exists('Game')
+@object_exists(Game)
 def game_reviews(request: HttpRequest, game_slug: str) -> HttpResponse:
     game = Game.objects.get(slug=game_slug)
     reviews = Review.objects.filter(game=game)
@@ -54,7 +54,7 @@ def game_reviews(request: HttpRequest, game_slug: str) -> HttpResponse:
 @correct_method('POST')
 @required_fields('rating', 'comment')
 @token_check
-@object_exists('Game')
+@object_exists(Game)
 def add_review(request: HttpRequest, game_slug: str) -> HttpResponse:
     json_body = json.loads(request.body)
     payload = request.headers.get('Authorization')
@@ -70,7 +70,7 @@ def add_review(request: HttpRequest, game_slug: str) -> HttpResponse:
 
 
 @correct_method('GET')
-@object_exists('Review')
+@object_exists(Review)
 def review_detail(request: HttpRequest, review_pk: int) -> HttpResponse:
     review = Review.objects.get(pk=review_pk)
     serializer = ReviewSerializer(review, request=request)

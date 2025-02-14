@@ -26,35 +26,26 @@ def correct_method(method):
 
 
 def object_exists(req_model):
-    all_models = {
-        'Game': Game,
-        'Category': Category,
-        'Review': Review,
-        'Platform': Platform,
-        'Order': Order,
-    }
-
     def decorator(func):
         def wrapper(*args, **kwargs):
-            model = all_models[req_model]
             parameter = list(kwargs.keys())[0]
             value = kwargs.get(parameter)
             if value:
                 is_pk = parameter.split('_')[-1] == 'pk'
                 try:
                     if is_pk:
-                        model.objects.get(pk=value)
+                        req_model.objects.get(pk=value)
                     else:
-                        model.objects.get(slug=value)
-                except model.DoesNotExist:
-                    return JsonResponse({'error': f'{req_model} not found'}, status=404)
+                        req_model.objects.get(slug=value)
+                except req_model.DoesNotExist:
+                    return JsonResponse({'error': f'{req_model._meta.object_name} not found'}, status=404)
             else:
                 data = json.loads(args[0].body)
                 value = data.get('game-slug')
                 try:
-                    model.objects.get(slug=value)
-                except model.DoesNotExist:
-                    return JsonResponse({'error': f'{req_model} not found'}, status=404)
+                    req_model.objects.get(slug=value)
+                except req_model.DoesNotExist:
+                    return JsonResponse({'error': f'{req_model._meta.object_name} not found'}, status=404)
                 
 
             return func(*args, **kwargs)

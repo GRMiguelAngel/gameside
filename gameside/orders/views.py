@@ -38,7 +38,7 @@ def add_order(request: HttpRequest) -> HttpResponse:
 
 @correct_method('GET')
 @token_check
-@object_exists('Order')
+@object_exists(Order)
 @user_is_owner
 def order_detail(request: HttpRequest, order_pk: int) -> HttpResponse:
     order = Order.objects.get(pk=order_pk)
@@ -48,7 +48,7 @@ def order_detail(request: HttpRequest, order_pk: int) -> HttpResponse:
 
 @correct_method('GET')
 @token_check
-@object_exists('Order')
+@object_exists(Order)
 @user_is_owner
 def order_game_list(request: HttpRequest, order_pk: int) -> HttpResponse:
     order = Order.objects.get(pk=order_pk)
@@ -59,8 +59,8 @@ def order_game_list(request: HttpRequest, order_pk: int) -> HttpResponse:
 @correct_method('POST')
 @required_fields('game-slug')
 @token_check
-@object_exists('Order')
-@object_exists('Game')
+@object_exists(Order)
+@object_exists(Game)
 @user_is_owner
 def add_game_to_order(request: HttpRequest, order_pk: int) -> HttpResponse:
     game_slug = json.loads(request.body)['game-slug']
@@ -73,7 +73,7 @@ def add_game_to_order(request: HttpRequest, order_pk: int) -> HttpResponse:
 @correct_method('POST')
 @required_fields('status')
 @token_check
-@object_exists('Order')
+@object_exists(Order)
 @user_is_owner
 @invalid_status
 @is_initiated
@@ -88,7 +88,7 @@ def change_order_status(request: HttpRequest, order_pk: int) -> HttpResponse:
 @correct_method('POST')
 @required_fields('card-number', 'exp-date', 'cvc')
 @token_check
-@object_exists('Order')
+@object_exists(Order)
 @user_is_owner
 @valid_card
 @is_confirmed

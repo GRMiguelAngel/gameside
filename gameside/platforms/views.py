@@ -15,7 +15,7 @@ def platform_list(request: HttpRequest) -> HttpResponse:
 
 
 @correct_method('GET')
-@object_exists('Platform')
+@object_exists(Platform)
 def platform_detail(request: HttpRequest, platform_slug: str) -> HttpResponse:
     platform = Platform.objects.get(slug=platform_slug)
     serializer = PlatformSerializer(platform, request=request)
